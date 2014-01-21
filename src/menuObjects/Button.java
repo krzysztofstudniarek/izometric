@@ -2,7 +2,7 @@ package menuObjects;
 
 import Entities.AbstractEntity;
 
-public class Button extends AbstractEntity{
+public class Button extends AbstractEntity {
 
 	public Button(double x, double y, double width, double height) {
 		super(x, y, width, height);
@@ -12,13 +12,16 @@ public class Button extends AbstractEntity{
 	@Override
 	public void draw() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void update(int delta) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }
+
+
+
