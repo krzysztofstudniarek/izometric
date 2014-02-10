@@ -2,11 +2,14 @@ package main;
 
 import java.util.Random;
 
-import map.HorizontalMap;
-import map.Map;
+//import map.HorizontalMap;
+//import map.Map;
+import menuObjects.Button;
+import menuObjects.Pointer;
 
 import org.lwjgl.*;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.*;
 import org.newdawn.slick.Color;
 import org.newdawn.slick.SlickException;
@@ -22,7 +25,6 @@ public class IzometricMain {
 	public static final int WIDTH = 800;
 	public static final int HIGHT = 600;
 	private boolean isRunning = true;
-//	private long lastFrame = getTime();
 
 	int size = 5;
 
@@ -32,7 +34,7 @@ public class IzometricMain {
 	int view = 0;
 
 	double score = 0;
-	double difficulty = 1625;
+	double difficulty = 1025;
 	int counter = 1;
 
 	private double timeStamp = System.currentTimeMillis();
@@ -43,68 +45,90 @@ public class IzometricMain {
 
 	private Cell[][] cells = new Cell[size][size];
 
-	private Map map;
+	//private Map map;
 
-	private HorizontalMap xMap, yMap;
+	//private HorizontalMap xMap, yMap;
 
 	private boolean lose = false;
 
 	private static UnicodeFont font;
 	private static UnicodeFont font1;
 
-/*	private long getTime() {
-		return (Sys.getTime() * 1000) / Sys.getTimerResolution();
-	}*/
+	private Pointer pointer;
 
-/*	private int getDelta() {
-		long currentTime = getTime();
-		int delta = (int) (currentTime - lastFrame);
-		lastFrame = getTime();
-		return delta;
-	}*/
+	private Button gameOverButton;
+	private Button startGame;
+
+	private int gameMode = 0;
 
 	public IzometricMain() {
 
 		SetUpDisplay();
 		SetUpOpenGL();
 		SetUpEntities();
-//		SetUpTimer();
 
 		while (isRunning) {
-
-			GL11.glClear(GL_COLOR_BUFFER_BIT);
-			
-			cells[X][Y].visited = true;
-
 			GL11.glClear(GL_COLOR_BUFFER_BIT);
 
-//			int delta = getDelta();
+			pointer.update(0);
 
-			this.render(this.view);
+			switch (gameMode) {
+			case 0:
 
-			this.input();
+				pointer.update(0);
 
-			glTranslated(translate_x, translate_y, 0);
+				render(0);
 
-			if (cells[X][Y].getY() != HIGHT / 2 + yConvertion) {
-				translate_y = -(float) (cells[X][Y].getY() - HIGHT / 2 - yConvertion);
-				yConvertion -= translate_y;
-			} else {
-				translate_y = 0;
+				if (this.gameOverButton.clicked()) {
+					isRunning = false;
+				}
+
+				if (this.startGame.clicked()) {
+
+					SetUpEntities();
+					SetUpOpenGL();
+					
+					gameMode = 1;
+				}
+
+				break;
+			case 1:
+
+				cells[X][Y].visited = true;
+
+				this.render(1);
+
+				this.input();
+
+				glTranslated(translate_x, translate_y, 0);
+
+				if (cells[X][Y].getY() != HIGHT / 2 + yConvertion) {
+					translate_y = -(float) (cells[X][Y].getY() - HIGHT / 2 - yConvertion);
+					yConvertion -= translate_y;
+				} else {
+					translate_y = 0;
+				}
+
+				if (cells[X][Y].getX() != WIDTH / 2 + xConvertion) {
+					translate_x = -(float) (cells[X][Y].getX() - WIDTH / 2 - xConvertion);
+					xConvertion -= translate_x;
+				} else {
+					translate_x = 0;
+				}
+
+				gameLogic();
+
+				if (lose) {
+					SetUpEntities();
+					SetUpOpenGL();
+					this.gameMode = 0;
+				}
+
+				break;
 			}
-
-			if (cells[X][Y].getX() != WIDTH / 2 + xConvertion) {
-				translate_x = -(float) (cells[X][Y].getX() - WIDTH / 2 - xConvertion);
-				xConvertion -= translate_x;
-			} else {
-				translate_x = 0;
-			}
-
-			gameLogic();
-
-			map.update(xConvertion, yConvertion, X, Y);
+			/*map.update(xConvertion, yConvertion, X, Y);
 			xMap.update(xConvertion, yConvertion);
-			yMap.update(xConvertion, yConvertion);
+			yMap.update(xConvertion, yConvertion);*/
 
 			Display.update();
 			Display.sync(1000);
@@ -211,38 +235,41 @@ public class IzometricMain {
 	}
 
 	private void SetUpOpenGL() {
-		
-		
-		
-		
-		GL11.glShadeModel(GL11.GL_SMOOTH);        
-		GL11.glDisable(GL11.GL_DEPTH_TEST);
-		GL11.glDisable(GL11.GL_LIGHTING);  
-		
+
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
 		GL11.glLoadIdentity();
 		GL11.glOrtho(0, WIDTH, HIGHT, 0, -1, 1);
+		GL11.glMatrixMode(GL11.GL_MODELVIEW);
 	}
 
 	private void SetUpEntities() {
 
 		int startX = WIDTH / 2;
 		int startY = 100;
-
+		
+		lose = false;
+		xConvertion = 0;
+		yConvertion = 150;
+		this.score = 0;
+		this.difficulty  = 1025;
+		this.counter = 1;
+		//int X = size / 2;
+		//int Y = size / 2;
+		
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				cells[i][j] = new Cell(startX + j * 20, startY + j * 10, 40, 20);
+				cells[i][j].z = 5;
 			}
 
 			startX -= 20;
 			startY += 10;
 		}
 
-		map = new Map(10, 10, size, cells);
+		/*map = new Map(10, 10, size, cells);
 		xMap = new HorizontalMap(10, 400, size, cells, 1);
-		yMap = new HorizontalMap(WIDTH - (size + 1) * 10, 400, size, cells, 0);
+		yMap = new HorizontalMap(WIDTH - (size + 1) * 10, 400, size, cells, 0);*/
 
 		java.awt.Font awtFont = new java.awt.Font("Verdana",
 				java.awt.Font.BOLD, 25);
@@ -254,11 +281,11 @@ public class IzometricMain {
 		} catch (SlickException e) {
 			e.printStackTrace();
 		}
-		
+
 		java.awt.Font awtFont1 = new java.awt.Font("Verdana",
 				java.awt.Font.BOLD, 100);
 		font1 = new UnicodeFont(awtFont1);
-		font1.getEffects().add(new ColorEffect(java.awt.Color.RED));
+		font1.getEffects().add(new ColorEffect(java.awt.Color.BLACK));
 		font1.addAsciiGlyphs();
 		try {
 			font1.loadGlyphs();
@@ -266,61 +293,103 @@ public class IzometricMain {
 			e.printStackTrace();
 		}
 
-	}
+		pointer = new Pointer(Mouse.getX(), Mouse.getY());
 
-/*	public void SetUpTimer() {
-		lastFrame = getTime();
-	}*/
+		gameOverButton = new Button(0, 0, 200, 50, pointer);
+		this.startGame = new Button(0, 0, 200, 50, pointer);
+
+	}
 
 	private void render(int view) {
 
-		// font.drawString((float)(WIDTH-150+xConvertion),
-		// (float)(30+yConvertion), "score: "+(int)score, Color.black);
+		switch (view) {
+		case 1:
+			GL11.glColor4d(0, 0.5, 0, 1.0);
+			GL11.glBegin(GL11.GL_QUADS);
+			GL11.glVertex2d(cells[0][0].getX(), cells[0][0].getY() - 10);
+			GL11.glVertex2d(cells[0][0].getX() - cells[0][0].getWidth() * size
+					/ 2, cells[0][0].getY() + cells[0][0].getHeight() * size
+					/ 2 - 10);
 
-		GL11.glColor4d(0, 0.5, 0, 1.0);
-		GL11.glBegin(GL11.GL_QUADS);
-		GL11.glVertex2d(cells[0][0].getX(), cells[0][0].getY() - 10);
-		GL11.glVertex2d(cells[0][0].getX() - cells[0][0].getWidth() * size / 2,
-				cells[0][0].getY() + cells[0][0].getHeight() * size / 2 - 10);
+			GL11.glVertex2d(cells[0][0].getX() - cells[0][0].getWidth() * size
+					/ 2, cells[0][0].getY()
+					+ (cells[0][0].getHeight() * size / 2) - 300);
+			GL11.glVertex2d(cells[0][0].getX(), cells[0][0].getY() - 300);
 
-		GL11.glVertex2d(cells[0][0].getX() - cells[0][0].getWidth() * size / 2,
-				cells[0][0].getY() + (cells[0][0].getHeight() * size / 2) - 300);
-		GL11.glVertex2d(cells[0][0].getX(), cells[0][0].getY() - 300);
+			GL11.glEnd();
 
-		GL11.glEnd();
+			GL11.glColor4d(0, 0.2, 0, 1.0);
 
-		GL11.glColor4d(0, 0.2, 0, 1.0);
+			GL11.glBegin(GL11.GL_QUADS);
+			GL11.glVertex2d(cells[0][0].getX(), cells[0][0].getY() - 10);
+			GL11.glVertex2d(cells[0][0].getX() + cells[0][0].getWidth() * size
+					/ 2, cells[0][0].getY() + cells[0][0].getHeight() * size
+					/ 2 - 10);
 
-		GL11.glBegin(GL11.GL_QUADS);
-		GL11.glVertex2d(cells[0][0].getX(), cells[0][0].getY() - 10);
-		GL11.glVertex2d(cells[0][0].getX() + cells[0][0].getWidth() * size / 2,
-				cells[0][0].getY() + cells[0][0].getHeight() * size / 2 - 10);
+			GL11.glVertex2d(cells[0][0].getX() + cells[0][0].getWidth() * size
+					/ 2, cells[0][0].getY()
+					+ (cells[0][0].getHeight() * size / 2) - 300);
+			GL11.glVertex2d(cells[0][0].getX(), cells[0][0].getY() - 300);
 
-		GL11.glVertex2d(cells[0][0].getX() + cells[0][0].getWidth() * size / 2,
-				cells[0][0].getY() + (cells[0][0].getHeight() * size / 2) - 300);
-		GL11.glVertex2d(cells[0][0].getX(), cells[0][0].getY() - 300);
+			GL11.glEnd();
 
-		GL11.glEnd();
-
-		for (int i = 0; i < size; i++) {
-			for (int j = 0; j < size; j++) {
-				cells[i][j].draw();
-				cells[i][j].visited = false;
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {
+					cells[i][j].draw();
+					cells[i][j].visited = false;
+				}
 			}
-		}
-		
-		GL11.glEnable(GL11.GL_TEXTURE_2D);
+			GL11.glEnable(GL11.GL_TEXTURE_2D);
+			font.drawString((float) WIDTH / 2 - 50, (float) -250, (int) score
+					+ " pts.", Color.gray);
+			GL11.glDisable(GL11.GL_TEXTURE_2D);
 
-		if (lose) {
-			font1.drawString((float)(50+xConvertion), (float)(yConvertion+50), "GAME OVER", new Color(1, 0, 0, 0.7f));
-		}
+			break;
 
-		
-		font.drawString((float)WIDTH/2-50, (float)-250, (int)score+" pts.", Color.gray);
-		GL11.glDisable(GL11.GL_TEXTURE_2D);
-		// map.draw();
-		// xMap.draw();
-		// yMap.draw();
+		case 2:
+			font1.drawString((float) (50 + xConvertion),
+					(float) (yConvertion + 50), "GAME OVER", new Color(1, 0, 0,
+							0.7f));
+			gameOverButton.draw();
+			break;
+		case 0:
+
+			gameOverButton.setX(WIDTH / 2 - 100);
+			gameOverButton.setY(400);
+			gameOverButton.draw();
+
+			this.startGame.setX(WIDTH / 2 - 100);
+			this.startGame.setY(340);
+			this.startGame.draw();
+
+			GL11.glEnable(GL11.GL_TEXTURE_2D);
+			font1.drawString((float) (90 + xConvertion), (float) (30),
+					"IZOMETRIC\n    GAME");
+			GL11.glDisable(GL11.GL_TEXTURE_2D);
+
+			if (startGame.isOn()) {
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				font.drawString(WIDTH / 2 - 80, 350, "Start Game", Color.black);
+				GL11.glDisable(GL11.GL_TEXTURE_2D);
+			} else {
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				font.drawString(WIDTH / 2 - 80, 350, "Start Game", Color.white);
+				GL11.glDisable(GL11.GL_TEXTURE_2D);
+			}
+
+			if (gameOverButton.isOn()) {
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				font.drawString(WIDTH / 2 - 40, 410, "Quit", Color.black);
+				GL11.glDisable(GL11.GL_TEXTURE_2D);
+			} else {
+				GL11.glEnable(GL11.GL_TEXTURE_2D);
+				font.drawString(WIDTH / 2 - 40, 410, "Quit", Color.white);
+				GL11.glDisable(GL11.GL_TEXTURE_2D);
+			}
+
+			break;
+
+		}
 
 	}
 
@@ -349,15 +418,14 @@ public class IzometricMain {
 				}
 			}
 
-			if (System.currentTimeMillis() - timeStamp1 >= 60000 - 5000 * counter) {
+			if (System.currentTimeMillis() - timeStamp1 >= 30000 - 5000 * counter) {
 				timeStamp1 = System.currentTimeMillis();
-				
-				
+
 				for (int i = 0; i < size; i++) {
 					for (int j = 0; j < size; j++) {
-						if(counter <= 5){
+						if (counter <= 5) {
 							cells[i][j].z += counter;
-						}else{
+						} else {
 							cells[i][j].z += 5;
 						}
 						float f = r.nextFloat();
@@ -372,16 +440,14 @@ public class IzometricMain {
 						}
 					}
 				}
-				
-				if (counter * 5000 <= 55000)
+
+				if (counter * 5000 <= 25000)
 					counter++;
-				
 
 				if (difficulty > 100) {
 					difficulty -= 100;
 				}
 
-				
 			}
 		}
 

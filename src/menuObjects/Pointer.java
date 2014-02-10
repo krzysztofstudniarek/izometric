@@ -1,24 +1,25 @@
 package menuObjects;
 
+import org.lwjgl.input.Mouse;
+
 import Entities.AbstractEntity;
 
 public class Pointer extends AbstractEntity{
 
-	public Pointer(double x, double y, double width, double height) {
-		super(x, y, width, height);
-		// TODO Auto-generated constructor stub
+	public Pointer(double x, double y) {
+		super(x, y, 1, 1);
+		
 	}
 
 	@Override
 	public void draw() {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void update(int delta) {
-		// TODO Auto-generated method stub
-		
+		this.x = Mouse.getX();
+		this.y = 600-Mouse.getY();
 	}
 
 }
