@@ -1,12 +1,12 @@
 package main;
 
+import java.io.IOException;
 import java.util.Random;
 
 //import map.HorizontalMap;
 //import map.Map;
 import menuObjects.Button;
 import menuObjects.Pointer;
-
 import org.lwjgl.*;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -15,7 +15,9 @@ import org.newdawn.slick.Color;
 import org.newdawn.slick.SlickException;
 import org.newdawn.slick.UnicodeFont;
 import org.newdawn.slick.font.effects.ColorEffect;
-
+import org.newdawn.slick.opengl.Texture;
+import org.newdawn.slick.opengl.TextureLoader;
+import org.newdawn.slick.util.ResourceLoader;
 import Entities.Cell;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -25,6 +27,8 @@ public class IzometricMain {
 	public static final int WIDTH = 800;
 	public static final int HIGHT = 600;
 	private boolean isRunning = true;
+
+	private Texture texture;
 
 	int size = 5;
 
@@ -45,14 +49,15 @@ public class IzometricMain {
 
 	private Cell[][] cells = new Cell[size][size];
 
-	//private Map map;
+	// private Map map;
 
-	//private HorizontalMap xMap, yMap;
+	// private HorizontalMap xMap, yMap;
 
 	private boolean lose = false;
 
 	private static UnicodeFont font;
 	private static UnicodeFont font1;
+	private static UnicodeFont font2;
 
 	private Pointer pointer;
 
@@ -69,6 +74,7 @@ public class IzometricMain {
 
 		while (isRunning) {
 			GL11.glClear(GL_COLOR_BUFFER_BIT);
+			GL11.glColor4d(1, 1, 1, 1);
 
 			pointer.update(0);
 
@@ -87,8 +93,8 @@ public class IzometricMain {
 
 					SetUpEntities();
 					SetUpOpenGL();
-					
-					gameMode = 1;
+
+					gameMode = 2;
 				}
 
 				break;
@@ -119,16 +125,56 @@ public class IzometricMain {
 				gameLogic();
 
 				if (lose) {
+					//SetUpEntities();
+					SetUpOpenGL();
+					this.gameMode = 3;
+				}
+
+				break;
+
+			case 2:
+
+				pointer.update(0);
+
+				render(2);
+
+				if (this.startGame.clicked()) {
+
 					SetUpEntities();
 					SetUpOpenGL();
-					this.gameMode = 0;
+
+					gameMode = 1;
+				}
+
+				break;
+
+			case 3:
+
+				pointer.update(0);
+
+				render(3);
+
+				if (this.gameOverButton.clicked()) {
+					gameMode = 0;
+					pointer.setLocation(0, 0);
+				}
+
+				if (this.startGame.clicked()) {
+
+					SetUpEntities();
+					SetUpOpenGL();
+					pointer.setLocation(0, 0);
+					gameMode = 1;
 				}
 
 				break;
 			}
-			/*map.update(xConvertion, yConvertion, X, Y);
-			xMap.update(xConvertion, yConvertion);
-			yMap.update(xConvertion, yConvertion);*/
+
+			/*
+			 * map.update(xConvertion, yConvertion, X, Y);
+			 * xMap.update(xConvertion, yConvertion); yMap.update(xConvertion,
+			 * yConvertion);
+			 */
 
 			Display.update();
 			Display.sync(1000);
@@ -136,6 +182,7 @@ public class IzometricMain {
 				isRunning = false;
 
 			}
+
 		}
 	}
 
@@ -235,11 +282,17 @@ public class IzometricMain {
 	}
 
 	private void SetUpOpenGL() {
-
+		GL11.glEnable(GL11.GL_TEXTURE_2D);
+		GL11.glShadeModel(GL11.GL_SMOOTH);
+		GL11.glDisable(GL11.GL_DEPTH_TEST);
+		GL11.glDisable(GL11.GL_LIGHTING);
+		GL11.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+		GL11.glClearDepth(1);
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GL11.glViewport(0, 0, WIDTH, HIGHT);
 		GL11.glLoadIdentity();
-		GL11.glOrtho(0, WIDTH, HIGHT, 0, -1, 1);
+		GL11.glOrtho(0, WIDTH, HIGHT, 0, 1, -1);
 		GL11.glMatrixMode(GL11.GL_MODELVIEW);
 	}
 
@@ -247,16 +300,14 @@ public class IzometricMain {
 
 		int startX = WIDTH / 2;
 		int startY = 100;
-		
+
 		lose = false;
 		xConvertion = 0;
 		yConvertion = 150;
 		this.score = 0;
-		this.difficulty  = 1025;
+		this.difficulty = 1025;
 		this.counter = 1;
-		//int X = size / 2;
-		//int Y = size / 2;
-		
+
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				cells[i][j] = new Cell(startX + j * 20, startY + j * 10, 40, 20);
@@ -267,9 +318,12 @@ public class IzometricMain {
 			startY += 10;
 		}
 
-		/*map = new Map(10, 10, size, cells);
-		xMap = new HorizontalMap(10, 400, size, cells, 1);
-		yMap = new HorizontalMap(WIDTH - (size + 1) * 10, 400, size, cells, 0);*/
+		try {
+			texture = TextureLoader.getTexture("PNG",
+					ResourceLoader.getResourceAsStream("controls.png"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 
 		java.awt.Font awtFont = new java.awt.Font("Verdana",
 				java.awt.Font.BOLD, 25);
@@ -293,6 +347,17 @@ public class IzometricMain {
 			e.printStackTrace();
 		}
 
+		java.awt.Font awtFont2 = new java.awt.Font("Verdana",
+				java.awt.Font.BOLD, 30);
+		font2 = new UnicodeFont(awtFont2);
+		font2.getEffects().add(new ColorEffect(java.awt.Color.BLACK));
+		font2.addAsciiGlyphs();
+		try {
+			font2.loadGlyphs();
+		} catch (SlickException e) {
+			e.printStackTrace();
+		}
+
 		pointer = new Pointer(Mouse.getX(), Mouse.getY());
 
 		gameOverButton = new Button(0, 0, 200, 50, pointer);
@@ -301,6 +366,8 @@ public class IzometricMain {
 	}
 
 	private void render(int view) {
+
+		Color.white.bind();
 
 		switch (view) {
 		case 1:
@@ -333,24 +400,58 @@ public class IzometricMain {
 
 			GL11.glEnd();
 
+			double d = (System.currentTimeMillis() - this.timeStamp1)
+					/ (30000 - 5000 * counter);
+
+			GL11.glColor4d(d, 1 - d, 0.2, 1.0);
+			GL11.glRectd(0 + xConvertion, 400 + yConvertion, this.WIDTH
+					* (1 - d) + xConvertion, this.HIGHT + yConvertion);
+
 			for (int i = 0; i < size; i++) {
 				for (int j = 0; j < size; j++) {
 					cells[i][j].draw();
 					cells[i][j].visited = false;
 				}
 			}
+
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
 			font.drawString((float) WIDTH / 2 - 50, (float) -250, (int) score
 					+ " pts.", Color.gray);
+
+			font.drawString((float) (WIDTH / 2 - 50 + xConvertion),
+					(float) (410 + yConvertion), (String) ("level " + counter),
+					Color.gray);
 			GL11.glDisable(GL11.GL_TEXTURE_2D);
 
 			break;
 
 		case 2:
-			font1.drawString((float) (50 + xConvertion),
-					(float) (yConvertion + 50), "GAME OVER", new Color(1, 0, 0,
-							0.7f));
-			gameOverButton.draw();
+
+			this.startGame.setX(WIDTH / 2 - 100);
+			this.startGame.setY(450);
+			this.startGame.draw();
+
+			GL11.glColor4d(1, 1, 1, 1);
+
+			texture.bind();
+			GL11.glEnable(GL11.GL_TEXTURE_2D);
+			GL11.glBegin(GL11.GL_QUADS);
+			GL11.glTexCoord2f(0, 0);
+			GL11.glVertex3d(100, 150, 0.0);
+			GL11.glTexCoord2f(0.65f, 0);
+			GL11.glVertex3d(300, 150, 0.0);
+			GL11.glTexCoord2f(0.65f, 0.7f);
+			GL11.glVertex3d(300, 350, 0.0);
+			GL11.glTexCoord2f(0, 0.7f);
+			GL11.glVertex3d(100, 350, 0.0);
+			GL11.glEnd();
+
+			font2.drawString((float) (WIDTH / 2 - 80), (float) (50), "Controls");
+			font.drawString(WIDTH / 2, 210, "- motion");
+			font.drawString(WIDTH / 2, 310, "- remove block");
+			font.drawString(WIDTH / 2 - 80, 460, "Start Game");
+			GL11.glDisable(GL11.GL_TEXTURE_2D);
+
 			break;
 		case 0:
 
@@ -365,27 +466,27 @@ public class IzometricMain {
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
 			font1.drawString((float) (90 + xConvertion), (float) (30),
 					"IZOMETRIC\n    GAME");
+			font.drawString(WIDTH / 2 - 80, 350, "Start Game");
+			font.drawString(WIDTH / 2 - 40, 410, "Quit");
 			GL11.glDisable(GL11.GL_TEXTURE_2D);
 
-			if (startGame.isOn()) {
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				font.drawString(WIDTH / 2 - 80, 350, "Start Game", Color.black);
-				GL11.glDisable(GL11.GL_TEXTURE_2D);
-			} else {
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				font.drawString(WIDTH / 2 - 80, 350, "Start Game", Color.white);
-				GL11.glDisable(GL11.GL_TEXTURE_2D);
-			}
+			break;
+		case 3:
+			gameOverButton.setX(WIDTH / 2 - 100);
+			gameOverButton.setY(450);
+			gameOverButton.draw();
 
-			if (gameOverButton.isOn()) {
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				font.drawString(WIDTH / 2 - 40, 410, "Quit", Color.black);
-				GL11.glDisable(GL11.GL_TEXTURE_2D);
-			} else {
-				GL11.glEnable(GL11.GL_TEXTURE_2D);
-				font.drawString(WIDTH / 2 - 40, 410, "Quit", Color.white);
-				GL11.glDisable(GL11.GL_TEXTURE_2D);
-			}
+			this.startGame.setX(WIDTH / 2 - 100);
+			this.startGame.setY(390);
+			this.startGame.draw();
+
+			GL11.glEnable(GL11.GL_TEXTURE_2D);
+			font1.drawString((float) (90 + xConvertion), (float) (30),
+					"GAME OVER");
+			font2.drawString((float)(WIDTH / 2 - 130), (float)250, (String)("SCORE: "+score));
+			font.drawString(WIDTH / 2 - 80, 400, "Start Game");
+			font.drawString(WIDTH / 2 - 100, 460, "Back to menu");
+			GL11.glDisable(GL11.GL_TEXTURE_2D);
 
 			break;
 
@@ -423,10 +524,8 @@ public class IzometricMain {
 
 				for (int i = 0; i < size; i++) {
 					for (int j = 0; j < size; j++) {
-						if (counter <= 5) {
-							cells[i][j].z += counter;
-						} else {
-							cells[i][j].z += 5;
+						if (cells[i][j].addHeight()) {
+							lose = true;
 						}
 						float f = r.nextFloat();
 						if (cells[i][j].type == 0) {

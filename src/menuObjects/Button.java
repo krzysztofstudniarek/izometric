@@ -2,6 +2,7 @@ package menuObjects;
 
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import org.newdawn.slick.Color;
 
 import Entities.AbstractEntity;
 
@@ -18,13 +19,15 @@ public class Button extends AbstractEntity {
 
 	@Override
 	public void draw() {
+		//GL11.glEnable(GL11.GL_TEXTURE_2D);
 		if (!this.intersects(pointer)) {
-			GL11.glColor4d(1, 1, 1, 1);
+			GL11.glColor3d(1, 1, 1);
 			GL11.glRectd(this.x - 10, this.y, this.x + width, this.y + height);
 		} else {
-			GL11.glColor4d(0.5, 0.5, 0.5, 1);
+			GL11.glColor3d(0.5, 0.5, 0.5);
 			GL11.glRectd(this.x - 10, this.y, this.x + width, this.y + height);
 		}
+		//GL11.glDisable(GL11.GL_TEXTURE_2D);
 	}
 
 	@Override
