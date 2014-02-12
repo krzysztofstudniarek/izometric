@@ -125,8 +125,10 @@ public class IzometricMain {
 				gameLogic();
 
 				if (lose) {
-					//SetUpEntities();
+					double s = score;
+					SetUpEntities();
 					SetUpOpenGL();
+					this.score = s;
 					this.gameMode = 3;
 				}
 
@@ -155,6 +157,8 @@ public class IzometricMain {
 				render(3);
 
 				if (this.gameOverButton.clicked()) {
+					SetUpEntities();
+					SetUpOpenGL();
 					gameMode = 0;
 					pointer.setLocation(0, 0);
 				}
@@ -401,7 +405,7 @@ public class IzometricMain {
 			GL11.glEnd();
 
 			double d = (System.currentTimeMillis() - this.timeStamp1)
-					/ (30000 - 5000 * counter);
+					/ (30000 - 5000 * Math.min(counter, 5));
 
 			GL11.glColor4d(d, 1 - d, 0.2, 1.0);
 			GL11.glRectd(0 + xConvertion, 400 + yConvertion, this.WIDTH
@@ -483,7 +487,8 @@ public class IzometricMain {
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
 			font1.drawString((float) (90 + xConvertion), (float) (30),
 					"GAME OVER");
-			font2.drawString((float)(WIDTH / 2 - 130), (float)250, (String)("SCORE: "+score));
+			font2.drawString((float) (WIDTH / 2 - 130), (float) 250,
+					(String) ("SCORE: " + score));
 			font.drawString(WIDTH / 2 - 80, 400, "Start Game");
 			font.drawString(WIDTH / 2 - 100, 460, "Back to menu");
 			GL11.glDisable(GL11.GL_TEXTURE_2D);
@@ -496,11 +501,11 @@ public class IzometricMain {
 
 	private void gameLogic() {
 
+		Random r = new Random();
+
 		if (!lose && System.currentTimeMillis() - timeStamp >= (difficulty)) {
 
 			timeStamp = System.currentTimeMillis();
-
-			Random r = new Random();
 
 			Cell c = cells[r.nextInt(size)][r.nextInt(size)];
 
@@ -518,36 +523,35 @@ public class IzometricMain {
 					}
 				}
 			}
+		}
+		if (System.currentTimeMillis() - timeStamp1 >= 30000 - 5000 * Math.min(
+				counter, 5)) {
+			timeStamp1 = System.currentTimeMillis();
 
-			if (System.currentTimeMillis() - timeStamp1 >= 30000 - 5000 * counter) {
-				timeStamp1 = System.currentTimeMillis();
-
-				for (int i = 0; i < size; i++) {
-					for (int j = 0; j < size; j++) {
-						if (cells[i][j].addHeight()) {
-							lose = true;
-						}
-						float f = r.nextFloat();
-						if (cells[i][j].type == 0) {
-							if (f >= 0.95 && f < 0.952) {
-								cells[i][j].type = 1;
-							} else if (f >= 0.952 && f < 0.975) {
-								cells[i][j].type = 2;
-							} else if (f >= 0.975 && f < 1.0) {
-								cells[i][j].type = 3;
-							}
+			for (int i = 0; i < size; i++) {
+				for (int j = 0; j < size; j++) {
+					if (cells[i][j].addHeight()) {
+						lose = true;
+					}
+					float f = r.nextFloat();
+					if (cells[i][j].type == 0) {
+						if (f >= 0.95 && f < 0.952) {
+							cells[i][j].type = 1;
+						} else if (f >= 0.952 && f < 0.975) {
+							cells[i][j].type = 2;
+						} else if (f >= 0.975 && f < 1.0) {
+							cells[i][j].type = 3;
 						}
 					}
 				}
-
-				if (counter * 5000 <= 25000)
-					counter++;
-
-				if (difficulty > 100) {
-					difficulty -= 100;
-				}
-
 			}
+
+			counter++;
+
+			if (difficulty > 500) {
+				difficulty -= 100;
+			}
+
 		}
 
 	}
