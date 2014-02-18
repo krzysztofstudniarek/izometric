@@ -1,5 +1,11 @@
 package main;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Random;
 
@@ -31,13 +37,15 @@ public class IzometricMain {
 	private Texture texture;
 
 	int size = 5;
-
+	private int diffi = 1;
+	
 	int X = size / 2;
 	int Y = size / 2;
 
 	int view = 0;
 
 	double score = 0;
+	double highScore = 0;
 	double difficulty = 1025;
 	int counter = 1;
 
@@ -49,10 +57,6 @@ public class IzometricMain {
 
 	private Cell[][] cells = new Cell[size][size];
 
-	// private Map map;
-
-	// private HorizontalMap xMap, yMap;
-
 	private boolean lose = false;
 
 	private static UnicodeFont font;
@@ -63,10 +67,40 @@ public class IzometricMain {
 
 	private Button gameOverButton;
 	private Button startGame;
+	
+	private Button easy, normal, hard;
 
 	private int gameMode = 0;
 
+	private File profile;
+
+	private BufferedWriter w;
+
 	public IzometricMain() {
+
+		try {
+			profile = new File("profile.txt");
+
+			if (profile.exists()) {
+				BufferedReader r = new BufferedReader(new FileReader(profile));
+				this.highScore = Double.parseDouble(r.readLine());
+				r.close();
+			} else {
+				BufferedWriter w = new BufferedWriter(new FileWriter(profile));
+				profile.createNewFile();
+				this.highScore = 0;
+				w.write(this.highScore + "");
+				w.close();
+			}
+
+		} catch (FileNotFoundException e) {
+			System.out.print(e.getMessage());
+
+		} catch (NumberFormatException e) {
+			System.out.print(e.getMessage());
+		} catch (IOException e) {
+			System.out.print(e.getMessage());
+		}
 
 		SetUpDisplay();
 		SetUpOpenGL();
@@ -130,6 +164,7 @@ public class IzometricMain {
 					SetUpOpenGL();
 					this.score = s;
 					this.gameMode = 3;
+
 				}
 
 				break;
@@ -140,10 +175,38 @@ public class IzometricMain {
 
 				render(2);
 
-				if (this.startGame.clicked()) {
+				if (this.easy.clicked()) {
 
+					this.diffi = 1;
+					this.size = 5;
+					
 					SetUpEntities();
 					SetUpOpenGL();
+					
+
+					gameMode = 1;
+				}
+				
+				if (this.normal.clicked()) {
+
+					this.diffi = 2;
+					this.size = 7;
+					
+					SetUpEntities();
+					SetUpOpenGL();
+					
+
+					gameMode = 1;
+				}
+				
+				if (this.hard.clicked()) {
+
+					this.diffi = 3;
+					this.size = 10;
+					
+					SetUpEntities();
+					SetUpOpenGL();
+					
 
 					gameMode = 1;
 				}
@@ -157,28 +220,39 @@ public class IzometricMain {
 				render(3);
 
 				if (this.gameOverButton.clicked()) {
+					if (this.score > this.highScore) {
+						this.highScore = this.score;
+						try {
+							BufferedWriter w = new BufferedWriter(new FileWriter(profile));
+							w.write(this.highScore + "");
+							w.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
 					SetUpEntities();
 					SetUpOpenGL();
 					gameMode = 0;
-					pointer.setLocation(0, 0);
-				}
 
-				if (this.startGame.clicked()) {
-
+				} else if (this.startGame.clicked()) {
+					if (this.score > this.highScore) {
+						this.highScore = this.score;
+						try {
+							BufferedWriter w = new BufferedWriter(new FileWriter(profile));
+							w.write(this.highScore + "");
+							w.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
 					SetUpEntities();
 					SetUpOpenGL();
 					pointer.setLocation(0, 0);
-					gameMode = 1;
+					gameMode = 2;
 				}
 
 				break;
 			}
-
-			/*
-			 * map.update(xConvertion, yConvertion, X, Y);
-			 * xMap.update(xConvertion, yConvertion); yMap.update(xConvertion,
-			 * yConvertion);
-			 */
 
 			Display.update();
 			Display.sync(1000);
@@ -231,14 +305,14 @@ public class IzometricMain {
 					switch (cells[X][Y].type) {
 					case 0:
 						if (cells[X][Y].removeHeight()) {
-							score += 100;
+							score += 100 + (diffi-1)*50;
 						}
 						break;
 					case 1:
 						for (int i = 0; i < size; i++) {
 							for (int j = 0; j < size; j++) {
 								if (cells[i][j].removeHeight()) {
-									score += 100;
+									score += 100 + (diffi-1)*50;
 								}
 							}
 						}
@@ -252,17 +326,18 @@ public class IzometricMain {
 					case 3:
 						for (int i = 0; i < size; i++) {
 							if (i != Y && cells[X][i].removeHeight()) {
-								score += 100;
+								score += 100 + (diffi-1)*50;
 							}
 
 							if (i != X && cells[i][Y].removeHeight()) {
-								score += 100;
+								score += 100 + (diffi-1)*50;
 							}
 						}
 
 						if (cells[X][Y].removeHeight()) {
-							score += 100;
+							score += 100 + (diffi-1)*50;
 						}
+
 						cells[X][Y].type = 0;
 						break;
 					}
@@ -311,7 +386,14 @@ public class IzometricMain {
 		this.score = 0;
 		this.difficulty = 1025;
 		this.counter = 1;
+		this.timeStamp = System.currentTimeMillis();
+		this.timeStamp1 = System.currentTimeMillis();
 
+		this.cells = new Cell[size][size];
+		this.X = size / 2;
+		this.Y = size / 2;
+		this.difficulty = 1025 - diffi*150; 
+		
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				cells[i][j] = new Cell(startX + j * 20, startY + j * 10, 40, 20);
@@ -366,6 +448,10 @@ public class IzometricMain {
 
 		gameOverButton = new Button(0, 0, 200, 50, pointer);
 		this.startGame = new Button(0, 0, 200, 50, pointer);
+		
+		easy = new Button(0, 0, 200, 50, pointer);
+		normal = new Button(0, 0, 200, 50, pointer);
+		hard = new Button(0, 0, 200, 50, pointer);
 
 	}
 
@@ -431,10 +517,18 @@ public class IzometricMain {
 
 		case 2:
 
-			this.startGame.setX(WIDTH / 2 - 100);
-			this.startGame.setY(450);
-			this.startGame.draw();
+			this.easy.setX(WIDTH / 2 - 100);
+			this.easy.setY(420);
+			this.easy.draw();
 
+			this.normal.setX(WIDTH / 2 - 100);
+			this.normal.setY(480);
+			this.normal.draw();
+			
+			this.hard.setX(WIDTH / 2 - 100);
+			this.hard.setY(540);
+			this.hard.draw();
+			
 			GL11.glColor4d(1, 1, 1, 1);
 
 			texture.bind();
@@ -453,7 +547,9 @@ public class IzometricMain {
 			font2.drawString((float) (WIDTH / 2 - 80), (float) (50), "Controls");
 			font.drawString(WIDTH / 2, 210, "- motion");
 			font.drawString(WIDTH / 2, 310, "- remove block");
-			font.drawString(WIDTH / 2 - 80, 460, "Start Game");
+			font.drawString(WIDTH / 2 - 80, 430, "Start easy");
+			font.drawString(WIDTH / 2 - 90, 490, "Start normal");
+			font.drawString(WIDTH / 2 - 80, 550, "Start hard");
 			GL11.glDisable(GL11.GL_TEXTURE_2D);
 
 			break;
@@ -487,8 +583,15 @@ public class IzometricMain {
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
 			font1.drawString((float) (90 + xConvertion), (float) (30),
 					"GAME OVER");
-			font2.drawString((float) (WIDTH / 2 - 130), (float) 250,
-					(String) ("SCORE: " + score));
+			if (this.highScore > score) {
+				font2.drawString((float) (WIDTH / 2 - 130), (float) 300,
+						(String) ("SCORE: " + (int) score));
+				font2.drawString((float) (WIDTH / 2 - 230), (float) 250, "HIGH SCORE: "+this.highScore);
+			} else {
+				font2.drawString((float) (WIDTH / 2 - 130), (float) 300,
+						(String) ("SCORE: " + (int) score));
+				font2.drawString((float) (WIDTH / 2 - 170), (float) 250, "NEW HIGH SCORE");
+			}
 			font.drawString(WIDTH / 2 - 80, 400, "Start Game");
 			font.drawString(WIDTH / 2 - 100, 460, "Back to menu");
 			GL11.glDisable(GL11.GL_TEXTURE_2D);
@@ -525,7 +628,7 @@ public class IzometricMain {
 			}
 		}
 		if (System.currentTimeMillis() - timeStamp1 >= 30000 - 5000 * Math.min(
-				counter, 5)) {
+				counter, 5)-100*diffi) {
 			timeStamp1 = System.currentTimeMillis();
 
 			for (int i = 0; i < size; i++) {
@@ -548,8 +651,8 @@ public class IzometricMain {
 
 			counter++;
 
-			if (difficulty > 500) {
-				difficulty -= 100;
+			if (difficulty > 300) {
+				difficulty -= 100 - 50*diffi;
 			}
 
 		}
